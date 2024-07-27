@@ -1,0 +1,22 @@
+.main {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+}
+
+#canvas {
+    border: 1px solid #000;
+    aspect-ratio: 1;
+    width: min(80vw, 60vh);
+}
+
+#range {
+    width: 300px;
+}
+
+button {
+    width: 150px;
+    height: 60px;
+}
