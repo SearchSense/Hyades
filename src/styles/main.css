@@ -1,22 +1,202 @@
-.main {
+* {
+    box-sizing: border-box;
+}
+
+:root {
+    --hyades-theme: #ececec;
+    --hyades-on-theme: #000000;
+
+    --hyades-primary: #a20082;
+    --hyades-on-primary: #ffffff;
+
+    --hyades-secondary: #94a200;
+    --hyades-on-secondary: #ffffff;
+
+    --hyades-disabled: #a0a0a0;
+    --hyades-on-disabled: #ffffff;
+
+    --hyades-margin: 1em;
+    --hyades-header-height: 3em;
+}
+
+body {
     display: flex;
+    justify-content: space-around;
+    align-items: stretch;
+
     flex-direction: column;
+    gap: 1em;
+
+    background-color: var(--hyades-theme);
+    color: var(--hyades-on-theme);
+
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+header {
+    display: flex;
+    justify-content: space-around;
     align-items: center;
+
+    gap: 1em;
+    padding: 1em var(--hyades-margin);
+    flex-wrap: wrap;
+
+    position: sticky;
+    top: 0;
+
+    width: 100%;
+    height: var(--hyades-header-height);
+
+    background-color: var(--hyades-primary);
+    color: var(--hyades-on-primary);
+    box-shadow: 0 0 1em 0 var(--hyades-secondary)
+}
+
+header span {
+    text-align: start;
+}
+
+header span.header-h1 {
+    font-size: 1.2em;
+}
+
+header a.header-a {
+    text-decoration: none;
+    color: inherit;
+}
+
+header a.header-a:hover {
+    border-bottom: 1px solid var(--hyades-on-primary);
+}
+
+main {
+    display: flex;
     justify-content: center;
-    height: 100%;
+    align-items: center;
+    flex-direction: column;
+
+    gap: 1em;
+    padding: 0 var(--hyades-margin);
+
+    width: 100vw;
+    flex-grow: 1;
 }
 
-#canvas {
-    border: 1px solid #000;
-    aspect-ratio: 1;
-    width: min(80vw, 60vh);
+main canvas#hyades-canvas {
+    border: 3px solid var(--hyades-secondary);
+    width: 100%;
+    height: 60vh;
 }
 
-#range {
-    width: 300px;
+main aside {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    flex-direction: column;
+
+    gap: 1em;
+    padding: 0 var(--hyades-margin);
+
+    width: 100%;
 }
 
-button {
-    width: 150px;
-    height: 60px;
+main aside div {
+    width: 100%;
+}
+
+main aside input[type="range"] {
+    width: 100%;
+}
+
+main aside div#control-btn-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1em;
+}
+
+main button {
+    background-color: var(--hyades-secondary);
+    color: var(--hyades-on-secondary);
+
+    border: none;
+    border-radius: 1em;
+
+    cursor: pointer;
+
+    width: 100%;
+    padding: 1em 0;
+}
+
+main button:hover,
+main button:focus {
+    background-color: var(--hyades-on-secondary);
+    color: var(--hyades-secondary);
+    border: 3px solid var(--hyades-secondary);
+}
+
+main button:active {
+    background-color: var(--hyades-primary);
+    color: var(--hyades-on-primary);
+    border: 3px solid var(--hyades-on-primary);
+}
+
+main button:disabled {
+    background-color: var(--hyades-disabled);
+    color: var(--hyades-on-disabled);
+    cursor: not-allowed;
+}
+
+.flex-gap {
+    flex: 1 1 auto;
+}
+
+@media only screen and (min-width: 480px) {
+    main aside {
+        display: grid;
+        padding: 0;
+    }
+}
+
+@media only screen and (min-width: 480px) and (max-width: 768px) {
+    :root {
+        --hyades-margin: 2em;
+    }
+
+    main aside {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    main aside div#control-btn-wrapper {
+        grid-column: span 2;
+    }
+}
+
+@media only screen and (max-width: 768px) {
+    .desktop-only {
+        display: none;
+    }
+}
+
+@media only screen and (min-width: 768px) {
+    :root {
+        --hyades-margin: 3em;
+    }
+
+    main {
+        flex-direction: row;
+    }
+
+    main canvas#hyades-canvas {
+        width: 70vw;
+        height: calc(100vh - 2 * var(--hyades-header-height));
+    }
+
+    main aside {
+        grid-template-columns: 1fr;
+    }
+
+    main aside div#control-btn-wrapper {
+        grid-template-columns: 1fr;
+    }
 }
