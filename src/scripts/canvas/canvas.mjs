@@ -9,7 +9,7 @@ export class HyadesCanvas {
     /**
      * @param {string} canvasId - The id of the canvas element.
      */
-    constructor(canvasId = "canvas") {
+    constructor(canvasId = "hyades-canvas") {
         this.canvas = document.getElementById(canvasId);
         this._datapoint_canvas = document.createElement('canvas');
         this._region_canvas = document.createElement('canvas');
