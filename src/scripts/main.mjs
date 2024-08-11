@@ -1,46 +1,47 @@
-import CONFIG from "./common/config.mjs";
-import { knn_algorithm } from "./cluster/knn/knn.mjs";
+import { HyadesConfig } from "./common/config.mjs";
+import { KNN_algorithm } from "./clustering/knn/knn.mjs";
 import { HyadesCanvas } from "./canvas/canvas.mjs";
 
-CONFIG.CLUSTER.ASSIGN = knn_algorithm
+HyadesConfig.Clustering.Algorithm = KNN_algorithm;
+let App = new HyadesCanvas()
 
-let obj = {
-    canvas: new HyadesCanvas()
-}
+// ============================================================================
+// Controller
+// ============================================================================
 
-const step_button = document.querySelector('#control-step-btn')
-const start_button = document.querySelector('#control-start-btn')
-const pause_button = document.querySelector('#control-pause-btn')
-const reset_button = document.querySelector('#control-reset-btn')
+const stepBtn = document.querySelector('#control-step-btn')
+const startBtn = document.querySelector('#control-start-btn')
+const pauseBtn = document.querySelector('#control-pause-btn')
+const resetBtn = document.querySelector('#control-reset-btn')
 
-step_button.addEventListener('click', (event) => {
-    obj.canvas.expandRegions();
-    obj.canvas.render();
+stepBtn.addEventListener('click', (event) => {
+    App.expandRegions();
+    App.render();
 });
 
-start_button.addEventListener('click', (event) => {
-    start_button.disabled = true;
-    pause_button.disabled = false;
-    step_button.disabled = true;
+startBtn.addEventListener('click', (event) => {
+    startBtn.disabled = true;
+    pauseBtn.disabled = false;
+    stepBtn.disabled = true;
 
-    CONFIG.ANIMATION.ACTIVE = true;
-    obj.canvas.loop();
+    HyadesConfig.Animation.Active = true;
+    App.loop();
 });
 
-pause_button.addEventListener('click', (event) => {
-    start_button.disabled = false;
-    pause_button.disabled = true;
-    step_button.disabled = false;
+pauseBtn.addEventListener('click', (event) => {
+    startBtn.disabled = false;
+    pauseBtn.disabled = true;
+    stepBtn.disabled = false;
 
-    CONFIG.ANIMATION.ACTIVE = false;
-    obj.canvas.loop();
+    HyadesConfig.Animation.Active = false;
+    App.loop();
 });
 
-reset_button.addEventListener('click', (event) => {
-    start_button.disabled = false;
-    pause_button.disabled = true;
-    step_button.disabled = false;
+resetBtn.addEventListener('click', (event) => {
+    startBtn.disabled = false;
+    pauseBtn.disabled = true;
+    stepBtn.disabled = false;
 
-    CONFIG.ANIMATION.ACTIVE = false;
-    obj.canvas = new HyadesCanvas();
+    HyadesConfig.Animation.Active = false;
+    App.reset();
 });

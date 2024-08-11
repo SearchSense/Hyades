@@ -119,7 +119,7 @@ main button {
     background-color: var(--hyades-secondary);
     color: var(--hyades-on-secondary);
 
-    border: none;
+    border: 3px solid var(--hyades-on-secondary);
     border-radius: 1em;
 
     cursor: pointer;
@@ -133,6 +133,8 @@ main button:focus {
     background-color: var(--hyades-on-secondary);
     color: var(--hyades-secondary);
     border: 3px solid var(--hyades-secondary);
+
+    outline: none;
 }
 
 main button:active {

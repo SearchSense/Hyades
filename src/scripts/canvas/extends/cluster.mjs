@@ -1,74 +1,81 @@
-import CONFIG from "../../common/config.mjs";
-import { Cluster } from "../../cluster/cluster.mjs"
+import { random } from "../../common/util.mjs";
+import { HyadesConfig } from "../../common/config.mjs";
+import { Cluster } from "../../clustering/cluster.mjs";
+import { CanvasDataPoint } from "./datapoint.mjs";
 
 /**
- * Extended Cluster class for use with the canvas
+ * Extend Cluster class to use with the canvas.
  */
 export class CanvasCluster extends Cluster {
-    constructor(...options) {
-        super(...options)
+    /**
+     * Create a new data point.
+     * @param {Array<number> | DataPoint | number} coordinates
+     */
+    constructor(coordinates) {
+        super(coordinates);
 
-        this._color = 0;
-        this.color = "#";
-        for (let i = 0; i < 3; i++) {
-            const random = Math.floor(Math.random() * 256);
-            this._color = this._color << 8 | random;
-            this.color += Number(random).toString(16).padStart(2, '0')
-        }
-        this._color = this._color << 8 | 255;
+        /** @type {number} Color of the cluster. */
+        this.__pvt_color = Math.round(random(0x202020FF, 0xDFDFDFFF));
 
-        this.region_boundary = [this.centroid];
-    }
+        /** @type {string} The color of the cluster. */
+        this.color = `#${this.__pvt_color.toString(16).padStart(8, '0').slice(0, 6)}`;
 
-    get x() {
-        return this.centroid.coords[0];
-    }
+        /** @type {Array<CavnasDataPoint>} The active boundary of the cluster. */
+        this.__active_boundary = [new CanvasDataPoint(this)];
 
-    get y() {
-        return this.centroid.coords[1];
+        /** @type {Array<CavnasDataPoint>} The new boundary of the cluster. */
+        this.__new_boundary = [];
     }
 
     /**
-     * Expand the cluster region one step at a time
-     * @param {Array<CanvasCluster>} clusters - The list of clusters to grow
-     * @param {ImageBitmap} region_map - Tmapcanvas used to draw the clusters
+     * Expand the cluster boundary.
+     * @param {Array<CanvasCluster>} others - The list of other clusters.
+     * @param {ImageBitmap} regionMap - The region map.
      */
-    grow(clusters, region_map) {
-        let new_region_boundary = [];
-        const region_map_data = new Uint32Array(region_map.data.buffer);
+    grow(others, regionMap) {
+        /** @type {number} The number of data points to process in a batch. */
+        const __tmp_batch_size = HyadesConfig.Animation.BatchSize;
 
+        if (this.__active_boundary.length === 0) {
+            if (this.__new_boundary.length === 0)
+                return;
 
-        for (const datapoint of this.region_boundary) {
-            let new_datapoints = datapoint.getNeighbours();
+            this.__active_boundary = this.__new_boundary;
+            this.__new_boundary = [];
+        }
 
-            for (const new_datapoint of new_datapoints) {
-                const [x, y] = new_datapoint.coords;
+        const __tmp_border = this.__active_boundary.splice(0, __tmp_batch_size);
+        const __tmp_regionMap = new Uint32Array(regionMap.data.buffer);
+        const __tmp_width = regionMap.width;
 
-                if (x < 0 || x >= region_map.width || y < 0 || y >= region_map.height) {
+        for (const datapoint of __tmp_border) {
+            for (const neighbour of datapoint.getNeighbours()) {
+                const __ng_x = neighbour.x;
+                const __ng_y = neighbour.y;
+
+                if (__ng_x < 0 || __ng_x >= regionMap.width ||
+                    __ng_y < 0 || __ng_y >= regionMap.height)
+                    continue;
+
+                const __ng_index = Math.round(__ng_y * __tmp_width + __ng_x);
+                const __ng_color = __tmp_regionMap[__ng_index];
+
+                if (__ng_color === this.__pvt_color) {
+                    continue
+                } else if (__ng_color === 0) {
+                    __tmp_regionMap[__ng_index] = this.__pvt_color;
+                    this.__new_boundary.push(neighbour);
                     continue;
                 }
 
-                const pixel = region_map_data[y * region_map.width + x];
+                const __tmp_result = HyadesConfig.Clustering.Algorithm(neighbour, others, 1);
+                const __ng_cluster = __tmp_result[0].cluster;
 
-                if (pixel === this._color) {
-                    continue;
-                } else if (pixel === 0) {
-                    // console.log(x, y, new_datapoint)
-                    new_region_boundary.push(new_datapoint);
-                    region_map_data[y * region_map.width + x] = this._color;
-                    continue;
+                if (__ng_cluster.__pvt_color === this.__pvt_color) {
+                    __tmp_regionMap[__ng_index] = this.__pvt_color;
+                    this.__new_boundary.push(neighbour);
                 }
-
-                let cluster = CONFIG.CLUSTER.ASSIGN(new_datapoint, clusters);
-
-                if (cluster !== this) {
-                    new_region_boundary.push(new_datapoint);
-                    region_map_data[y * region_map.width + x] = this._color;
-                }
-            }
-        } // for datapoint of this.region_boundary
-
-        this.region_boundary = new_region_boundary;
-        console.log(this.region_boundary.length);
+            } // for (const neighbour of datapoint.getNeighbours())
+        } // for (const datapoint of __tmp_border)
     }
 }

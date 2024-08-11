@@ -1,52 +1,37 @@
 /**
- * This module contains the configuration for the Hyades application.
+ * Configuration for the Hyades application.
  */
-const CONFIG = {
-    /**
-     * N dimensional data point coordinates.
-     * Affects the memory usage, precision and performance of the application.
-     */
-    datapoint_coords_t: Uint32Array,
-
+export const HyadesConfig = {
     /**
      * Canvas rendering configuration.
      */
-    CANVAS: {
-        /**
-         * The radius of the data points.
-         */
-        datapoint_radius: 2,
+    Drawing: {
+        /** @type {number} The radius of the data points. */
+        DataPointRadius: 2,
 
-        /**
-         * The radius of the centroids.
-         */
-        centroid_radius: 4,
+        /** @type {number} The radius of the centroids. */
+        CentroidRadius: 4,
     },
 
     /**
-     * Clustering algorithm configuration.
+     * Animation rendering configuration.
      */
-    CLUSTER: {
-        /**
-         * Assign the data points to the nearest centroid.
-         */
-        ASSIGN: undefined,
+    Animation: {
+        /** @type {number} The animation interval, in milliseconds. */
+        Interval: 1000 / 30,
+
+        /** @type {boolean} Loop active. */
+        Active: false,
+
+        /** @type {number} The batch size for the animation. */
+        BatchSize: 300,
     },
 
     /**
-     * Animation configuration.
+     * Clustering configuration.
      */
-    ANIMATION: {
-        /**
-         * The animation interval, in milliseconds.
-         */
-        INTERFAVE: 1000 / 60,
-
-        /**
-         * Loop active.
-         */
-        ACTIVE: false,
-    },
+    Clustering: {
+        /** @type {(...options: any[]) => Array<{ cluster: Cluster, distance: number, index: number }>} The clustering algorithm to use. */
+        Algorithm: undefined,
+    }
 };
-
-export default CONFIG;
