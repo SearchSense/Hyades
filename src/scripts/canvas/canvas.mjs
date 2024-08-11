@@ -36,12 +36,15 @@ export class HyadesCanvas {
      * Reset the HyadesCanvas instance.
      */
     reset() {
-        this.updateSize();
-        this.__pvt_clusters = [new CanvasCluster([
-            Math.round(this.__cache_width / 2),
-            Math.round(this.__cache_height / 2),
-        ])];
-        this.render();
+
+        setTimeout(() => {
+            this.updateSize();
+            this.__pvt_clusters = [new CanvasCluster([
+                Math.round(this.__cache_width / 2),
+                Math.round(this.__cache_height / 2),
+            ])];
+            this.render();
+        }, 2 * HyadesConfig.Animation.Interval);
     }
 
     /**

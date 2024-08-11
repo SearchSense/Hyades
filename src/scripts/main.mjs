@@ -9,10 +9,22 @@ let App = new HyadesCanvas()
 // Controller
 // ============================================================================
 
+const fpsRng = document.querySelector('#control-fps-input')
+const batchRng = document.querySelector('#control-batch-input')
 const stepBtn = document.querySelector('#control-step-btn')
 const startBtn = document.querySelector('#control-start-btn')
 const pauseBtn = document.querySelector('#control-pause-btn')
 const resetBtn = document.querySelector('#control-reset-btn')
+
+fpsRng.addEventListener('input', (event) => {
+    HyadesConfig.Animation.Interval = 1000 / event.target.value;
+    document.querySelector('#control-fps-value').textContent = event.target.value;
+});
+
+batchRng.addEventListener('input', (event) => {
+    HyadesConfig.Animation.BatchSize = event.target.value;
+    document.querySelector('#control-batch-value').textContent = event.target.value;
+});
 
 stepBtn.addEventListener('click', (event) => {
     App.expandRegions();

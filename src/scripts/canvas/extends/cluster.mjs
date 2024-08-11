@@ -20,10 +20,10 @@ export class CanvasCluster extends Cluster {
         /** @type {string} The color of the cluster. */
         this.color = `#${this.__pvt_color.toString(16).padStart(8, '0').slice(0, 6)}`;
 
-        /** @type {Array<CavnasDataPoint>} The active boundary of the cluster. */
-        this.__active_boundary = [new CanvasDataPoint(this)];
+        /** @type {Array<CanvasDataPoint>} The active boundary of the cluster. */
+        this.__active_boundary = [new CanvasDataPoint([this.__pvt_x, this.__pvt_y])];
 
-        /** @type {Array<CavnasDataPoint>} The new boundary of the cluster. */
+        /** @type {Array<CanvasDataPoint>} The new boundary of the cluster. */
         this.__new_boundary = [];
     }
 
@@ -43,9 +43,15 @@ export class CanvasCluster extends Cluster {
             this.__active_boundary = this.__new_boundary;
             this.__new_boundary = [];
         }
+        else if(this.__active_boundary.length === 1){
+            this.__active_boundary = [new CanvasDataPoint([Math.round(this.__pvt_x), Math.round(this.__pvt_y)])];
+        }
 
+        /** @type {Array<CanvasDataPoint>} The data points to process in this batch. */
         const __tmp_border = this.__active_boundary.splice(0, __tmp_batch_size);
+        /** @type {Uint32Array} The region map data. */
         const __tmp_regionMap = new Uint32Array(regionMap.data.buffer);
+        /** @type {number} The width of the region map. */
         const __tmp_width = regionMap.width;
 
         for (const datapoint of __tmp_border) {
@@ -68,8 +74,16 @@ export class CanvasCluster extends Cluster {
                     continue;
                 }
 
-                const __tmp_result = HyadesConfig.Clustering.Algorithm(neighbour, others, 1);
+                const __tmp_result = HyadesConfig.Clustering.Algorithm(neighbour, others, 2);
                 const __ng_cluster = __tmp_result[0].cluster;
+                if(__tmp_result.length > 1){
+                    const __prev_cluster = __tmp_result[1].cluster;
+                    if(__prev_cluster.get_datapoint_count([neighbour.x, neighbour.y])){
+                        let __datapoint_count = __prev_cluster.get_datapoint_count([neighbour.x, neighbour.y]);
+                        __prev_cluster.remove([neighbour.x, neighbour.y], __datapoint_count);
+                        __ng_cluster.add([neighbour.x, neighbour.y], __datapoint_count);
+                    }
+                }
 
                 if (__ng_cluster.__pvt_color === this.__pvt_color) {
                     __tmp_regionMap[__ng_index] = this.__pvt_color;

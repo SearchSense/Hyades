@@ -85,9 +85,10 @@ export class DataPoint extends EventTarget {
     /**
      * Move the data point by a certain amount.
      * @param {Array<number> | DataPoint | number} delta
+     * @param {number} count
      * @returns {DataPoint} The current instance.
      */
-    moveBy(delta) {
+    moveBy(delta, count = 1) {
         /** @type {number} Change in X-coordinate. */
         let __tmp_x;
         /** @type {number} Change in Y-coordinate. */
@@ -112,8 +113,8 @@ export class DataPoint extends EventTarget {
             __tmp_y = Number(delta[1]);
         }
 
-        this.__pvt_x += __tmp_x;
-        this.__pvt_y += __tmp_y;
+        this.__pvt_x += count * __tmp_x;
+        this.__pvt_y += count * __tmp_y;
 
         return this;
     }
