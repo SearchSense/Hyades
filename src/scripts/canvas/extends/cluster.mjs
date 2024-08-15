@@ -24,6 +24,9 @@ export class CanvasCluster extends Cluster {
         /** @type {Array<CanvasDataPoint>} The active boundary of the cluster. */
         this._active_boundary = [new CanvasDataPoint(this)];
 
+        /** @type {Set<Symbol>} The list of active symbols. */
+        this._cache_active_symbols = new Set();
+
         /** @type {Array<CanvasDataPoint>} The new boundary of the cluster. */
         this._new_boundary = [];
 
@@ -49,7 +52,16 @@ export class CanvasCluster extends Cluster {
             if (this._new_boundary.length === 0)
                 return;
 
-            this._active_boundary = this._new_boundary;
+            this._cache_active_symbols.clear();
+            this._active_boundary = [];
+
+            this._new_boundary.forEach(datapoint => {
+                if (this._cache_active_symbols.has(datapoint.symbol))
+                    return;
+                this._cache_active_symbols.add(datapoint.symbol);
+                this._active_boundary.push(datapoint);
+            });
+
             this._new_boundary = [];
         }
 
@@ -61,6 +73,8 @@ export class CanvasCluster extends Cluster {
         const _tmp_width = regionMap.width;
 
         for (const datapoint of _tmp_border) {
+            this._cache_active_symbols.delete(datapoint.symbol);
+
             const _dp_x = datapoint.x;
             const _dp_y = datapoint.y;
 
