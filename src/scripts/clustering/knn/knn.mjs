@@ -19,15 +19,15 @@ export function KNN_algorithm(datapoint, clusters, k) {
         throw new Error("K must be a number greater than or equal to 1");
     if (isNaN(k) || !isFinite(k))
         throw new Error("K must be a finite number");
-    const __tmp_k = Math.round(Math.min(k, clusters.length));
+    const _tmp_k = Math.round(Math.min(k, clusters.length));
 
-    const __tmp_distances = datapoint.euclideanDistances(clusters);
-    const __tmp_ranks = __tmp_distances.map((d, i) => ({ d, i }));
+    const _tmp_distances = datapoint.euclideanDistances(clusters);
+    const _tmp_ranks = _tmp_distances.map((d, i) => ({ d, i }));
 
-    __tmp_ranks.sort((a, b) => a.d - b.d);
+    _tmp_ranks.sort((a, b) => a.d - b.d);
 
-    return __tmp_ranks.slice(0, __tmp_k)
-        .map((r, i) => ({
+    return _tmp_ranks.slice(0, _tmp_k)
+        .map(r => ({
             cluster: clusters[r.i],
             distance: r.d,
             index: r.i,

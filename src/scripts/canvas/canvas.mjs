@@ -10,23 +10,27 @@ export class HyadesCanvas {
      */
     constructor(canvasId = "hyades-canvas") {
         /** @type {HTMLCanvasElement} The canvas element. */
-        this.__pvt_canvas = document.querySelector(`#${canvasId}`);
-        if (!this.__pvt_canvas) {
+        this._pvt_canvas = document.querySelector(`#${String(canvasId)}`);
+        if (!this._pvt_canvas) {
             throw new Error("Canvas element not found");
         }
 
-        this.__pvt_ctx = this.__pvt_canvas.getContext('2d');
-        if (!this.__pvt_ctx) {
+        /** @type {CanvasRenderingContext2D} The canvas context. */
+        this._pvt_ctx = this._pvt_canvas.getContext('2d');
+        if (!this._pvt_ctx) {
             throw new Error("Canvas context not found");
         }
 
         /** @type {number} The width of the canvas. */
-        this.__cache_width = 0;
+        this._cache_width = 0;
         /** @type {number} The height of the canvas. */
-        this.__cache_height = 0;
+        this._cache_height = 0;
 
         /** @type {Array<CanvasCluster>} The list of clusters. */
-        this.__pvt_clusters = [];
+        this._pvt_clusters = [];
+
+        /** @type {Map<string, CanvasCluster>} The cluster-color map. */
+        this._pvt_clusterMap = new Map();
 
         this.reset();
         this.attachEventListeners();
@@ -36,12 +40,19 @@ export class HyadesCanvas {
      * Reset the HyadesCanvas instance.
      */
     reset() {
-        this.updateSize();
-        this.__pvt_clusters = [new CanvasCluster([
-            Math.round(this.__cache_width / 2),
-            Math.round(this.__cache_height / 2),
-        ])];
-        this.render();
+        setTimeout(() => {
+            this.updateSize();
+
+            const _tmp_cluster = new CanvasCluster([
+                Math.round(this._cache_width / 2),
+                Math.round(this._cache_height / 2),
+            ]);
+            this._pvt_clusters = [_tmp_cluster];
+            this._pvt_clusterMap.clear();
+            this._pvt_clusterMap.set(_tmp_cluster._pvt_color, _tmp_cluster);
+
+            this.render();
+        }, 2 * HyadesConfig.Animation.Interval);
     }
 
     /**
@@ -49,39 +60,40 @@ export class HyadesCanvas {
      * Note: Resize will automatically reset the canvas.
      */
     updateSize() {
-        this.__cache_width = this.__pvt_canvas.clientWidth;
-        this.__cache_height = this.__pvt_canvas.clientHeight;
+        this._cache_width = this._pvt_canvas.clientWidth;
+        this._cache_height = this._pvt_canvas.clientHeight;
 
-        this.__pvt_canvas.width = this.__cache_width;
-        this.__pvt_canvas.height = this.__cache_height;
+        this._pvt_canvas.width = this._cache_width;
+        this._pvt_canvas.height = this._cache_height;
 
-        this.__tmp_datapoint_canvas = new OffscreenCanvas(this.__cache_width, this.__cache_height);
-        this.__tmp_region_canvas = new OffscreenCanvas(this.__cache_width, this.__cache_height);
+        this._tmp_datapoint_canvas = new OffscreenCanvas(this._cache_width, this._cache_height);
+        this._tmp_region_canvas = new OffscreenCanvas(this._cache_width, this._cache_height);
 
-        this.__tmp_datapoint_ctx = this.__tmp_datapoint_canvas.getContext('2d');
-        this.__tmp_region_ctx = this.__tmp_region_canvas.getContext('2d', {
+        this._tmp_datapoint_ctx = this._tmp_datapoint_canvas.getContext('2d');
+        this._tmp_region_ctx = this._tmp_region_canvas.getContext('2d', {
             willReadFrequently: true,
         });
 
-        this.__pvt_regionMap = this.__tmp_region_ctx.createImageData(this.__cache_width, this.__cache_height);
+        this._pvt_regionMap = this._tmp_region_ctx.createImageData(this._cache_width, this._cache_height);
+        new Uint32Array(this._pvt_regionMap.data.buffer).fill(0);
     }
 
     /**
      * Block transfer the shadow canvas to the main canvas.
      */
     blitShadowCanvas() {
-        this.__pvt_ctx.clearRect(0, 0, this.__cache_width, this.__cache_height);
-        this.__pvt_ctx.drawImage(this.__tmp_region_canvas, 0, 0);
-        this.__pvt_ctx.drawImage(this.__tmp_datapoint_canvas, 0, 0);
+        this._pvt_ctx.clearRect(0, 0, this._cache_width, this._cache_height);
+        this._pvt_ctx.drawImage(this._tmp_region_canvas, 0, 0);
+        this._pvt_ctx.drawImage(this._tmp_datapoint_canvas, 0, 0);
     }
 
     /**
      * Re-render the canvas.
      */
     render() {
-        this.__pvt_ctx.clearRect(0, 0, this.__cache_width, this.__cache_height);
+        this._pvt_ctx.clearRect(0, 0, this._cache_width, this._cache_height);
         this.blitShadowCanvas();
-        this.__pvt_clusters.forEach(cluster => this.plotCentroid(cluster));
+        this._pvt_clusters.forEach(cluster => this.plotCentroid(cluster));
     }
 
     /**
@@ -92,12 +104,15 @@ export class HyadesCanvas {
     plotDataPoint(x, y) {
         let radius = HyadesConfig.Drawing.DataPointRadius;
 
-        this.__tmp_datapoint_ctx.beginPath();
-        this.__tmp_datapoint_ctx.moveTo(x - radius, y - radius);
-        this.__tmp_datapoint_ctx.lineTo(x + radius, y + radius);
-        this.__tmp_datapoint_ctx.moveTo(x + radius, y - radius);
-        this.__tmp_datapoint_ctx.lineTo(x - radius, y + radius);
-        this.__tmp_datapoint_ctx.stroke();
+        const _tmp_x = Math.round(x);
+        const _tmp_y = Math.round(y);
+
+        this._tmp_datapoint_ctx.beginPath();
+        this._tmp_datapoint_ctx.moveTo(_tmp_x - radius, _tmp_y - radius);
+        this._tmp_datapoint_ctx.lineTo(_tmp_x + radius, _tmp_y + radius);
+        this._tmp_datapoint_ctx.moveTo(_tmp_x + radius, _tmp_y - radius);
+        this._tmp_datapoint_ctx.lineTo(_tmp_x - radius, _tmp_y + radius);
+        this._tmp_datapoint_ctx.stroke();
     }
 
     /**
@@ -108,53 +123,63 @@ export class HyadesCanvas {
         let radius = HyadesConfig.Drawing.CentroidRadius;
         const { x, y, color } = cluster;
 
-        this.__pvt_ctx.beginPath();
-        this.__pvt_ctx.fillStyle = color;
-        this.__pvt_ctx.arc(x, y, radius, 0, 2 * Math.PI);
-        this.__pvt_ctx.fill();
-        this.__pvt_ctx.stroke();
+        const _tmp_x = Math.round(x);
+        const _tmp_y = Math.round(y);
+
+        this._pvt_ctx.beginPath();
+        this._pvt_ctx.fillStyle = color;
+        this._pvt_ctx.arc(_tmp_x, _tmp_y, radius, 0, 2 * Math.PI);
+        this._pvt_ctx.fill();
+        this._pvt_ctx.stroke();
     }
 
     /**
      * Attach the event listeners to the canvas.
      */
     attachEventListeners() {
-        this.__pvt_canvas.addEventListener('contextmenu', (event) => {
+        this._pvt_canvas.addEventListener('contextmenu', (event) => {
             event.preventDefault();
-            const canvas_area = this.__pvt_canvas.getBoundingClientRect();
-            let x = event.clientX - canvas_area.left;
-            let y = event.clientY - canvas_area.top;
+            const _tmp_canvas_rect = this._pvt_canvas.getBoundingClientRect();
+            let _tmp_x = event.clientX - _tmp_canvas_rect.left;
+            let _tmp_y = event.clientY - _tmp_canvas_rect.top;
 
-            this.__pvt_clusters.push(new CanvasCluster([x, y]));
+            const _tmp_cluster = new CanvasCluster([_tmp_x, _tmp_y]);
+            this._pvt_clusters.push(_tmp_cluster);
+            this._pvt_clusterMap.set(_tmp_cluster._pvt_color, _tmp_cluster);
             this.render();
         });
 
-        this.__pvt_canvas.addEventListener('click', (event) => {
+        this._pvt_canvas.addEventListener('click', (event) => {
             event.preventDefault();
-            const canvas_area = this.__pvt_canvas.getBoundingClientRect();
-            let x = event.clientX - canvas_area.left;
-            let y = event.clientY - canvas_area.top;
+            const _tmp_canvas_rect = this._pvt_canvas.getBoundingClientRect();
+            let _tmp_x = event.clientX - _tmp_canvas_rect.left;
+            let _tmp_y = event.clientY - _tmp_canvas_rect.top;
 
             /** @type {CanvasCluster} */
-            let __tmp_cluster = HyadesConfig.Clustering.Algorithm([x, y], this.__pvt_clusters, 1)[0].cluster;
-            __tmp_cluster.add([x, y]);
+            let _tmp_cluster = HyadesConfig.Clustering.Algorithm(
+                [_tmp_x, _tmp_y],
+                this._pvt_clusters,
+                1
+            )[0].cluster;
+            const _tmp_dp = _tmp_cluster.add([_tmp_x, _tmp_y]);
+            _tmp_cluster._new_boundary.push(_tmp_dp);
 
-            this.plotDataPoint(x, y);
+            this.plotDataPoint(_tmp_x, _tmp_y);
             this.render();
         });
 
-        this.__pvt_canvas.addEventListener('resize', this.updateSize.bind(this));
+        this._pvt_canvas.addEventListener('resize', this.updateSize.bind(this));
     }
 
     /**
      * Expand the cluster regions on the canvas.
      */
     expandRegions() {
-        this.__pvt_clusters.forEach((cluster) => {
-            cluster.grow(this.__pvt_clusters, this.__pvt_regionMap);
+        this._pvt_clusters.forEach(cluster => {
+            cluster.grow(this._pvt_clusters, this._pvt_regionMap, this._pvt_clusterMap);
         });
 
-        this.__tmp_region_ctx.putImageData(this.__pvt_regionMap, 0, 0);
+        this._tmp_region_ctx.putImageData(this._pvt_regionMap, 0, 0);
     }
 
     /**
@@ -164,7 +189,7 @@ export class HyadesCanvas {
         this.expandRegions();
         this.render();
         if (HyadesConfig.Animation.Active) {
-            setTimeout(() => this.loop(), HyadesConfig.Animation.Interval);
+            setTimeout(this.loop.bind(this), HyadesConfig.Animation.Interval);
         }
     }
 }
