@@ -161,8 +161,7 @@ export class HyadesCanvas {
                 this._pvt_clusters,
                 1
             )[0].cluster;
-            const _tmp_dp = _tmp_cluster.add([_tmp_x, _tmp_y]);
-            _tmp_cluster._new_boundary.push(_tmp_dp);
+            _tmp_cluster.add([_tmp_x, _tmp_y]);
 
             this.plotDataPoint(_tmp_x, _tmp_y);
             this.render();

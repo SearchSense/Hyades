@@ -100,7 +100,9 @@ export class Cluster extends DataPoint {
         this._cache_aggregate.moveBy(dataPoint, _tmp_count);
         this.jumpTo(this._cache_aggregate).scaleBy(1 / this._pvt_members);
 
-        this.dispatchEvent(new Event("cluster:shift"));
+        this.dispatchEvent(new CustomEvent("cluster:add",
+            { detail: { dataPoint: dataPoint, count: count } }
+        ));
 
         return dataPoint;
     }
@@ -125,7 +127,7 @@ export class Cluster extends DataPoint {
         this._cache_aggregate.moveBy(dataPoint, _tmp_count);
         this.jumpTo(this._cache_aggregate).scaleBy(1 / this._pvt_members);
 
-        this.dispatchEvent(new Event("cluster:shift"));
+        this.dispatchEvent(new Event("cluster:remove"));
 
         return this;
     }

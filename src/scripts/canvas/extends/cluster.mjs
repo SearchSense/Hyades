@@ -26,6 +26,13 @@ export class CanvasCluster extends Cluster {
 
         /** @type {Array<CanvasDataPoint>} The new boundary of the cluster. */
         this._new_boundary = [];
+
+        this.addEventListener("cluster:add", event => {
+            const _tmp_datapoint = event?.detail?.dataPoint;
+            if (_tmp_datapoint) {
+                this._active_boundary.push(new CanvasDataPoint(_tmp_datapoint));
+            }
+        });
     }
 
     /**
@@ -72,7 +79,7 @@ export class CanvasCluster extends Cluster {
                     _tmp_regionMap[_dp_index] = this._pvt_color;
 
                     const _other_cluster = colorMap.get(_dp_color);
-                    _other_cluster._new_boundary.push(datapoint);
+                    _other_cluster._new_boundary.push(...datapoint.getNeighbours());
 
                     const _dp_freq = _other_cluster.get_dp_freq(datapoint);
                     if (_dp_freq > 0) {
@@ -116,7 +123,7 @@ export class CanvasCluster extends Cluster {
                     this._new_boundary.push(neighbour);
 
                     const _other_cluster = colorMap.get(_ng_color);
-                    _other_cluster._new_boundary.push(neighbour);
+                    _other_cluster._new_boundary.push(...neighbour.getNeighbours());
 
                     const _dp_freq = _other_cluster.get_dp_freq(neighbour);
                     if (_dp_freq > 0) {
