@@ -27,7 +27,7 @@ export function KNN_algorithm(datapoint, clusters, k) {
     __tmp_ranks.sort((a, b) => a.d - b.d);
 
     return __tmp_ranks.slice(0, __tmp_k)
-        .map((r, i) => ({
+        .map(r => ({
             cluster: clusters[r.i],
             distance: r.d,
             index: r.i,

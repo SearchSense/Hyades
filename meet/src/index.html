@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hyades</title>
+
+    <link rel="stylesheet" href="./styles/normalize.css">
+    <link rel="stylesheet" href="./styles/main.css">
+
+    <script type="module" src="./scripts/main.mjs"></script>
+</head>
+
+<body>
+    <header>
+        <span class="header-h1">
+            <a href="https://github.com/SearchSense" target="_blank" class="header-a">
+                SearchSense
+            </a>
+        </span>
+        /
+        <span class="header-h1">
+            <a href="./" target="_self" class="header-a">Hyades</a>
+        </span>
+        <span class="flex-gap"></span>
+        <span class="desktop-only">Advanced Clustering Visualization Tool</span>
+    </header>
+    <main>
+        <canvas id="hyades-canvas"></canvas>
+
+        <aside>
+            <div id="control-fps-wrapper">
+                <label for="control-fps-input">
+                    <span>FPS: </span>
+                    <span id="control-fps-value">30</span>
+                </label>
+                <br />
+                <br />
+                <input type="range" id="control-fps-input" min="24" max="60" value="30">
+            </div>
+            <div id="control-batch-wrapper">
+                <label for="control-batch-input">
+                    <span>Batch Size: </span>
+                    <span id="control-batch-value">300</span>
+                </label>
+                <br />
+                <br />
+                <input type="range" id="control-batch-input" min="100" max="1000" value="300">
+            </div>
+            <div id="control-btn-wrapper">
+                <button id="control-start-btn">Start</button>
+                <button id="control-pause-btn" disabled>Pause</button>
+                <button id="control-step-btn">Step</button>
+                <button id="control-reset-btn">Reset</button>
+            </div>
+        </aside>
+    </main>
+</body>
+
+</html>
