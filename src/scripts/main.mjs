@@ -27,7 +27,8 @@ batchRng.addEventListener('input', (event) => {
 });
 
 stepBtn.addEventListener('click', (event) => {
-    App.expandRegions();
+    // App.expandRegions();
+    App.updateBorders();
     App.render();
 });
 

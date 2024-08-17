@@ -1,4 +1,5 @@
 import { DataPoint } from "./datapoint.mjs";
+import { random } from "../common/util.mjs";
 
 export class Cluster extends DataPoint {
     /**
@@ -16,6 +17,12 @@ export class Cluster extends DataPoint {
 
         /** @type {Map<string, number>} The number of data points in the cluster at a specific location. */
         this.datapoint_count = new Map();
+
+        /** @type {number} Color of the cluster. */
+        this.__pvt_color = Math.round(random(0x202020FF, 0xDFDFDFFF));
+
+        /** @type {string} The color of the cluster. */
+        this.color = `#${this.__pvt_color.toString(16).padStart(8, '0').slice(0, 6)}`;
     }
 
     /** The total number of members in the cluster. */
@@ -32,10 +39,10 @@ export class Cluster extends DataPoint {
         if (!(dataPoint instanceof DataPoint))
             dataPoint = new DataPoint(dataPoint);
 
-        if (this.datapoint_count[`${dataPoint.__pvt_x}_${dataPoint.__pvt_y}`] === undefined) {
+        if (this.datapoint_count[`${dataPoint.x}_${dataPoint.y}`] === undefined) {
             return 0;
         }
-        return this.datapoint_count[`${dataPoint.__pvt_x}_${dataPoint.__pvt_y}`];
+        return this.datapoint_count[`${dataPoint.x}_${dataPoint.y}`];
     }
 
     /**
@@ -48,10 +55,10 @@ export class Cluster extends DataPoint {
         if (!(dataPoint instanceof DataPoint))
             dataPoint = new DataPoint(dataPoint);
 
-        if (this.datapoint_count[`${dataPoint.__pvt_x}_${dataPoint.__pvt_y}`] === undefined) {
-            this.datapoint_count[`${dataPoint.__pvt_x}_${dataPoint.__pvt_y}`] = 0;
+        if (this.datapoint_count[`${dataPoint.x}_${dataPoint.y}`] === undefined) {
+            this.datapoint_count[`${dataPoint.x}_${dataPoint.y}`] = 0;
         }
-        this.datapoint_count[`${dataPoint.__pvt_x}_${dataPoint.__pvt_y}`] += count;
+        this.datapoint_count[`${dataPoint.x}_${dataPoint.y}`] += count;
         this.__pvt_members += count;
     }
 
@@ -66,7 +73,7 @@ export class Cluster extends DataPoint {
             dataPoint = new DataPoint(dataPoint);
 
         this.__cache_aggregate.moveBy(dataPoint, count);
-        this.increase_by([dataPoint.x, dataPoint.y], count);
+        this.increase_by(dataPoint, count);
         this.jumpTo(this.__cache_aggregate).scaleBy(1 / this.__pvt_members);
 
         return this;
@@ -83,7 +90,7 @@ export class Cluster extends DataPoint {
             dataPoint = new DataPoint(dataPoint);
 
         this.__cache_aggregate.moveBy([dataPoint.x, dataPoint.y], -count);
-        this.increase_by(dataPoint.x, dataPoint.y, -count);
+        this.increase_by(dataPoint, -count);
         this.jumpTo(this.__cache_aggregate).scaleBy(1 / this.__pvt_members);
 
         return this;

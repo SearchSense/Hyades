@@ -1,5 +1,8 @@
 import { HyadesConfig } from "../common/config.mjs";
-import { CanvasCluster } from "./extends/cluster.mjs";
+import { Cluster } from "../clustering/cluster.mjs";
+import { Deque } from "../common/util.mjs";
+import { grow } from "./extends/border.mjs";
+import { CanvasDataPoint } from "./extends/datapoint.mjs";
 
 /**
  * The canvas class is responsible for drawing the clusters on the canvas.
@@ -25,8 +28,11 @@ export class HyadesCanvas {
         /** @type {number} The height of the canvas. */
         this.__cache_height = 0;
 
-        /** @type {Array<CanvasCluster>} The list of clusters. */
+        /** @type {Array<Cluster>} The list of clusters. */
         this.__pvt_clusters = [];
+
+        /** @type {Deque<CanvasDataPoint>} The list of border data points. */
+        this.__pvt_border_datapoints = new Deque();
 
         this.reset();
         this.attachEventListeners();
@@ -39,10 +45,21 @@ export class HyadesCanvas {
 
         setTimeout(() => {
             this.updateSize();
-            this.__pvt_clusters = [new CanvasCluster([
+            this.__pvt_clusters = [new Cluster([
                 Math.round(this.__cache_width / 2),
                 Math.round(this.__cache_height / 2),
             ])];
+            this.__pvt_border_datapoints.add(new CanvasDataPoint([
+                Math.round(this.__cache_width / 2),
+                Math.round(this.__cache_height / 2),
+            ]));
+
+            const x = Math.round(this.__cache_width / 2);
+            const y = Math.round(this.__cache_height / 2);
+            const __tmp_regionMap = new Uint32Array(this.__pvt_regionMap.data.buffer);
+            const __index = Math.round(y * this.__pvt_regionMap.width + x);
+            __tmp_regionMap[__index] = 0xFF000000;
+            
             this.render();
         }, 2 * HyadesConfig.Animation.Interval);
     }
@@ -105,7 +122,7 @@ export class HyadesCanvas {
 
     /**
      * Plot a centroid on the shadow canvas.
-     * @param {CanvasCluster} cluster - The cluster to plot.
+     * @param {Cluster} cluster - The cluster to plot.
      */
     plotCentroid(cluster) {
         let radius = HyadesConfig.Drawing.CentroidRadius;
@@ -128,7 +145,12 @@ export class HyadesCanvas {
             let x = event.clientX - canvas_area.left;
             let y = event.clientY - canvas_area.top;
 
-            this.__pvt_clusters.push(new CanvasCluster([x, y]));
+            this.__pvt_clusters.push(new Cluster([x, y]));
+            this.__pvt_border_datapoints.add(new CanvasDataPoint([x, y]));
+            const __tmp_regionMap = new Uint32Array(this.__pvt_regionMap.data.buffer);
+            const __index = Math.round(y * this.__pvt_regionMap.width + x);
+            __tmp_regionMap[__index] = 0xFF000000;
+
             this.render();
         });
 
@@ -138,7 +160,7 @@ export class HyadesCanvas {
             let x = event.clientX - canvas_area.left;
             let y = event.clientY - canvas_area.top;
 
-            /** @type {CanvasCluster} */
+            /** @type {Cluster} */
             let __tmp_cluster = HyadesConfig.Clustering.Algorithm([x, y], this.__pvt_clusters, 1)[0].cluster;
             __tmp_cluster.add([x, y]);
 
@@ -150,12 +172,13 @@ export class HyadesCanvas {
     }
 
     /**
-     * Expand the cluster regions on the canvas.
+     * Update the borders of the clusters.
      */
-    expandRegions() {
-        this.__pvt_clusters.forEach((cluster) => {
-            cluster.grow(this.__pvt_clusters, this.__pvt_regionMap);
-        });
+    updateBorders(){
+        let no_items = this.__pvt_border_datapoints.length;
+        for(let i = 0; i < no_items; i++){
+            grow(this.__pvt_border_datapoints.remove(), this.__pvt_clusters, this.__pvt_regionMap, this.__pvt_border_datapoints);
+        }
 
         this.__tmp_region_ctx.putImageData(this.__pvt_regionMap, 0, 0);
     }
@@ -164,7 +187,7 @@ export class HyadesCanvas {
      * Loop the canvas rendering.
      */
     loop() {
-        this.expandRegions();
+        this.updateBorders();
         this.render();
         if (HyadesConfig.Animation.Active) {
             setTimeout(() => this.loop(), HyadesConfig.Animation.Interval);
