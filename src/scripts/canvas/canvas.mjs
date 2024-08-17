@@ -1,4 +1,5 @@
 import { HyadesConfig } from "../common/config.mjs";
+import { _global_datapoint_cache } from "./extends/datapoint.mjs";
 import { CanvasCluster } from "./extends/cluster.mjs";
 
 /**
@@ -68,14 +69,24 @@ export class HyadesCanvas {
 
         this._tmp_datapoint_canvas = new OffscreenCanvas(this._cache_width, this._cache_height);
         this._tmp_region_canvas = new OffscreenCanvas(this._cache_width, this._cache_height);
+        this._tmp_border_canvas = new OffscreenCanvas(this._cache_width, this._cache_height);
 
         this._tmp_datapoint_ctx = this._tmp_datapoint_canvas.getContext('2d');
         this._tmp_region_ctx = this._tmp_region_canvas.getContext('2d', {
             willReadFrequently: true,
         });
+        this._tmp_border_ctx = this._tmp_border_canvas.getContext('2d', {
+            willReadFrequently: true,
+        });
 
         this._pvt_regionMap = this._tmp_region_ctx.createImageData(this._cache_width, this._cache_height);
+        this._pvt_borderMap = this._tmp_border_ctx.createImageData(this._cache_width, this._cache_height);
+
+        /** @type {Map<symbol, number>} The temporary borders. */
+        this._cache_border = new Map();
+
         new Uint32Array(this._pvt_regionMap.data.buffer).fill(0);
+        new Uint32Array(this._pvt_borderMap.data.buffer).fill(0);
     }
 
     /**
@@ -85,6 +96,7 @@ export class HyadesCanvas {
         this._pvt_ctx.clearRect(0, 0, this._cache_width, this._cache_height);
         this._pvt_ctx.drawImage(this._tmp_region_canvas, 0, 0);
         this._pvt_ctx.drawImage(this._tmp_datapoint_canvas, 0, 0);
+        this._pvt_ctx.drawImage(this._tmp_border_canvas, 0, 0);
     }
 
     /**
@@ -178,7 +190,36 @@ export class HyadesCanvas {
             cluster.grow(this._pvt_clusters, this._pvt_regionMap, this._pvt_clusterMap);
         });
 
+        const _tmp_borderMap = new Uint32Array(this._pvt_borderMap.data.buffer);
+        _tmp_borderMap.fill(0);
+
+        this._pvt_clusters.forEach(cluster => {
+            cluster._active_boundary.forEach(coordinate => {
+                this._cache_border.set(coordinate.symbol, HyadesConfig.Animation.BorderTimeout);
+            });
+            cluster._new_boundary.forEach(coordinate => {
+                this._cache_border.set(coordinate.symbol, HyadesConfig.Animation.BorderTimeout);
+            });
+        });
+
+        this._cache_border.forEach((value, symbol) => {
+            const _tmp_dp = _global_datapoint_cache.get(symbol);
+            const _tmp_freq = value - 1;
+            const _tmp_index = Math.round(_tmp_dp.y * this._cache_width + _tmp_dp.x);
+            if (_tmp_index < 0 || _tmp_index >= _tmp_borderMap.length)
+                return;
+
+            if (_tmp_freq < 0) {
+                this._cache_border.delete(symbol);
+                _tmp_borderMap[_tmp_index] = 0;
+            } else {
+                _tmp_borderMap[_tmp_index] = 0xFF000000;
+                this._cache_border.set(symbol, _tmp_freq);
+            }
+        });
+
         this._tmp_region_ctx.putImageData(this._pvt_regionMap, 0, 0);
+        this._tmp_border_ctx.putImageData(this._pvt_borderMap, 0, 0);
     }
 
     /**

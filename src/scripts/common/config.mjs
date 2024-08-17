@@ -25,6 +25,9 @@ export const HyadesConfig = {
 
         /** @type {number} The batch size for the animation. */
         BatchSize: 300,
+
+        /** @type {number} The border timeout for the animation. */
+        BorderTimeout: 3,
     },
 
     /**

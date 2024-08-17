@@ -1,10 +1,10 @@
 import { DataPoint } from "../../clustering/datapoint.mjs";
 
 /** @type {Map<symbol, CanvasDataPoint>} The global canvas data point cache. */
-const _global_datapoint_cache = new Map();
+export const _global_datapoint_cache = new Map();
 
 /** @type {Map<symbol, Array<CanvasDataPoint>>} The global neighbours cache. */
-const _global_neighbours_cache = new Map()
+export const _global_neighbours_cache = new Map()
 
 /**
  * Extend DataPoint class to use with the canvas.
